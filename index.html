@@ -643,10 +643,11 @@ async function loadActivity(studentId) {
     spinner.classList.remove("hidden");
 
     try {
+        // ✅ We put orderBy BACK because you created the Index!
         const q = query(
             collection(db, "activity_logs"),
-            where("studentId", "==", studentId)
-            orderBy("uploadedAt", "desc")
+            where("studentId", "==", studentId),
+            orderBy("uploadedAt", "desc") 
         );
 
         const querySnapshot = await getDocs(q);
