@@ -646,7 +646,7 @@ async function loadActivity(studentId) {
         const q = query(
             collection(db, "activity_logs"),
             where("studentId", "==", studentId)
-            // orderBy line is DELETED
+            orderBy("uploadedAt", "desc")
         );
 
         const querySnapshot = await getDocs(q);
