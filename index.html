@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIWA Absent System</title>
+    <style>
+        /* FIWA COLOR PALETTE */
+        :root {
+            --bg-light: #F5FBFE;
+            --white: #FFFFFF;
+            --yellow: #F3B719;
+            --blue-mid: #1576BB;
+            --blue-dark: #044E85;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            font-family: sans-serif;
+            color: var(--blue-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            border-left: 10px solid var(--yellow);
+        }
+
+        h1 { color: var(--blue-mid); }
+        
+        .status-box {
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            background: #eee;
+            text-align: center;
+        }
+
+        .log-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            font-size: 0.9rem;
+        }
+        
+        .log-id { font-weight: bold; color: var(--blue-mid); }
+        .log-time { color: #666; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>📡 Connection Test</h1>
+        <div id="status" class="status-box">Connecting to Firebase...</div>
+    </div>
+
+    <div class="card">
+        <h3>Recent Scans (Direct from DB)</h3>
+        <div id="data-output">Waiting for data...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, limit, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ============================================
+        // ⚠️ PASTE YOUR CONFIG HERE AGAIN!
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVra7GlNTfPX7dk5MjewBnHpB9pDSH9e0",
+            authDomain: "fiwa-absen-makan.firebaseapp.com",
+            projectId: "fiwa-absen-makan",
+            storageBucket: "fiwa-absen-makan.firebasestorage.app",
+            messagingSenderId: "372035514688",
+            appId: "1:372035514688:web:d7a66d8f3150d3edb90aa5",
+            measurementId: "G-BY52DPL6QY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const statusDiv = document.getElementById("status");
+        const outputDiv = document.getElementById("data-output");
+
+        async function testRead() {
+            try {
+                // Try to read activity_logs
+                const q = query(
+                    collection(db, "activity_logs"), 
+                    orderBy("uploadedAt", "desc"), 
+                    limit(5)
+                );
+                
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    statusDiv.style.background = "#FFEB3B"; // Yellow
+                    statusDiv.innerText = "Connected, but database is empty.";
+                } else {
+                    statusDiv.style.background = "#C8E6C9"; // Green
+                    statusDiv.style.color = "#2E7D32";
+                    statusDiv.innerText = "✅ SUCCESS! Connected.";
+                    
+                    // Clear the "Waiting..." text
+                    outputDiv.innerHTML = "";
+
+                    // Print data to screen
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        
+                        // Create a visual item for each log
+                        const item = document.createElement("div");
+                        item.className = "log-item";
+                        item.innerHTML = `
+                            <div class="log-id">ID: ${data.studentId}</div>
+                            <div>Type: ${data.type}</div>
+                            <div class="log-time">${data.date}</div>
+                        `;
+                        outputDiv.appendChild(item);
+                    });
+                }
+            } catch (e) {
+                statusDiv.style.background = "#FFCDD2"; // Red
+                statusDiv.style.color = "#C62828";
+                statusDiv.innerText = "❌ Error: " + e.message;
+            }
+        }
+
+        testRead();
+    </script>
+</body>
+</html>
