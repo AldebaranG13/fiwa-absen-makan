@@ -1,13 +1,46 @@
 <html>
   <head>
-    <title>reCAPTCHA demo: Simple page</title>
+    <title>reCAPTCHA Test (No Console Needed)</title>
     <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        #token-box { 
+            width: 100%; height: 150px; margin-top: 20px; 
+            padding: 10px; border: 2px solid #00ff00; 
+            background: #f0fff0; font-family: monospace; word-break: break-all;
+            display: none; /* Hidden until we get a token */
+        }
+    </style>
   </head>
   <body>
-    <form action="" method="POST">
+    <h2>reCAPTCHA Token Generator 🤖</h2>
+    
+    <form action="javascript:void(0);" method="POST" onsubmit="getToken(event)">
       <div class="g-recaptcha" data-sitekey="6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW" data-action="LOGIN"></div>
       <br/>
-      <input type="submit" value="Submit">
+      <input type="submit" value="Get Token" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
     </form>
+
+    <textarea id="token-box" readonly></textarea>
+
+    <script>
+      function getToken(e) {
+        e.preventDefault();
+        
+        // Find the hidden input that reCAPTCHA creates
+        const tokenInput = document.querySelector('[name="g-recaptcha-response"]');
+        
+        if (tokenInput && tokenInput.value) {
+            // Show the box
+            const box = document.getElementById('token-box');
+            box.style.display = 'block';
+            box.value = tokenInput.value;
+            
+            alert("✅ SUCCESS! Token generated below.");
+        } else {
+            alert("❌ No token yet! Did you check the captcha box?");
+        }
+      }
+    </script>
   </body>
 </html>
