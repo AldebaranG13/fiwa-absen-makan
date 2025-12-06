@@ -252,8 +252,10 @@
             query, 
             where, 
             orderBy, 
-            limit,  // <--- make sure this guy is here!
-            onSnapshot 
+            limit, 
+            onSnapshot,
+            getDocs,                    // <--- you were missing this!
+            enableIndexedDbPersistence  // <--- and this!
         } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // 1. FIREBASE CONFIG
@@ -845,8 +847,10 @@
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
-            window.logout = () => signOut(auth);
         };
+
+        window.logout = () => signOut(auth);
+        
 
         // 8. FINAL CHECK
         alert("✅ SYSTEM ONLINE! Try logging in.");
