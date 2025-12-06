@@ -143,6 +143,9 @@
                 <div class="nav-item" onclick="switchPage('leaderboard', this)">
                     <i class="fa-solid fa-trophy" style="width: 20px;"></i> Leaderboard
                 </div>
+                <div class="nav-item" onclick="switchPage('feedback', this)">
+                    <i class="fa-solid fa-comment-dots" style="width: 20px;"></i> Feedback
+                </div>
                 <div style="flex: 1;"></div>
                 <div class="nav-item" onclick="logout()" style="color: var(--danger);">
                     <i class="fa-solid fa-arrow-right-from-bracket" style="width: 20px;"></i> Logout
@@ -192,6 +195,41 @@
                     </div>
                 </div>
 
+                <div id="page-feedback" class="hidden fade-in">
+                    <div class="card" style="padding: 30px; max-width: 600px; margin: 0 auto;">
+                        <h3 style="color: var(--fiwa-blue); margin-bottom: 20px;">
+                            <i class="fa-solid fa-comment-dots"></i> Student Feedback
+                        </h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                            Found a bug? Have an idea? Send it here. <br>
+                            <small style="color: var(--success);"><i class="fa-solid fa-shield-halved"></i> Protected by reCAPTCHA Enterprise</small>
+                        </p>
+
+                        <form onsubmit="submitFeedback(event)">
+                            <div style="margin-bottom: 15px;">
+                                <label style="display:block; margin-bottom: 5px; font-weight:600; font-size:13px;">Topic</label>
+                                <select id="fb-topic" style="width:100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                                    <option value="Bug Report">🐛 Bug Report</option>
+                                    <option value="Feature Request">💡 Feature Request</option>
+                                    <option value="Question">❓ General Question</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <label style="display:block; margin-bottom: 5px; font-weight:600; font-size:13px;">Message</label>
+                                <textarea id="fb-message" rows="5" required placeholder="Describe your issue..." 
+                                    style="width:100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: sans-serif;"></textarea>
+                            </div>
+
+                            <button type="submit" id="btn-submit-fb" 
+                                style="background: var(--fiwa-blue); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">
+                                Submit Feedback
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                </div> </div> </div> ```
+
             </div>
         </div>
     </div>
@@ -200,7 +238,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // 1. FIREBASE CONFIG
         const firebaseConfig = {
@@ -707,13 +745,52 @@ window.switchPage = (pageName, element) => {
     document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
     element.classList.add("active");
     
-    const titles = { "activity": "My Activity", "leaderboard": "Leaderboard" };
+    const titles = { 
+        "activity": "My Activity", 
+        "leaderboard": "Leaderboard",
+        "feedback": "Feedback" 
+    };
     document.getElementById("page-title").innerText = titles[pageName];
 
     document.getElementById("page-activity").classList.add("hidden");
     document.getElementById("page-leaderboard").classList.add("hidden");
     document.getElementById("page-" + pageName).classList.remove("hidden");
 }
+
+// --- FEEDBACK LOGIC START ---
+window.submitFeedback = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("btn-submit-fb");
+    const originalText = btn.innerText;
+    
+    btn.innerText = "Sending...";
+    btn.disabled = true;
+
+    try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Please login first.");
+
+        // This saves to Firestore. App Check protects this automatically!
+        await addDoc(collection(db, "feedback_messages"), {
+            uid: user.uid,
+            name: user.displayName,
+            email: user.email,
+            topic: document.getElementById("fb-topic").value,
+            message: document.getElementById("fb-message").value,
+            timestamp: new Date()
+        });
+
+        alert("✅ Feedback Sent! We will check it soon.");
+        document.getElementById("fb-message").value = ""; 
+        
+    } catch (error) {
+        alert("❌ Error: " + error.message);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+};
+// --- FEEDBACK LOGIC END ---
 </script>
 </body>
 </html>
