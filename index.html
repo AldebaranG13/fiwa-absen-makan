@@ -643,10 +643,10 @@
         const app = initializeApp(firebaseConfig);
 
         try {
-            initializeAppCheck(app, {
-                provider: new ReCaptchaV3Provider('6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW'),
-                isTokenAutoRefreshEnabled: true
-            });
+            //initializeAppCheck(app, {
+            //    provider: new ReCaptchaV3Provider('6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW'),
+            //    isTokenAutoRefreshEnabled: true
+            //});
             console.log("🛡️ App Check: Active");
         } catch (e) {
             console.error("⚠️ App Check Error:", e);
