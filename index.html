@@ -245,7 +245,16 @@
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         // REPLACE your firestore import with this one:
-        import { getFirestore, collection, query, where, getDocs, orderBy, addDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            query, 
+            where, 
+            orderBy, 
+            limit,  // <--- make sure this guy is here!
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // 1. FIREBASE CONFIG
         const firebaseConfig = {
@@ -728,7 +737,8 @@
                 const q = query(
                     collection(db, "activity_logs"),
                     where("studentId", "==", studentId),
-                    orderBy("uploadedAt", "desc")
+                    orderBy("uploadedAt", "desc"),
+                    limit(20) // <--- add this!
                 );
 
                 const querySnapshot = await getDocs(q);
@@ -792,7 +802,7 @@
         }
 
         // 7. FEEDBACK LOGIC
-        window.submitFeedback = async (e) => {da
+        window.submitFeedback = async (e) => {
             e.preventDefault();
 
             // Security Check
@@ -835,6 +845,7 @@
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
+            window.logout = () => signOut(auth);
         };
 
         // 8. FINAL CHECK
