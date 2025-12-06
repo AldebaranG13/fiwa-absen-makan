@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -219,6 +220,11 @@
                                 <label style="display:block; margin-bottom: 5px; font-weight:600; font-size:13px;">Message</label>
                                 <textarea id="fb-message" rows="5" required placeholder="Describe your issue..." 
                                     style="width:100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: sans-serif;"></textarea>
+                            </div>
+
+                            <div class="g-recaptcha" 
+                                data-sitekey="6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW" 
+                                data-action="FEEDBACK">
                             </div>
 
                             <button type="submit" id="btn-submit-fb" 
@@ -759,6 +765,15 @@ window.switchPage = (pageName, element) => {
 
 // --- FEEDBACK LOGIC START ---
 window.submitFeedback = async (e) => {
+
+    // 👇 ADD THIS SECURITY CHECK 👇
+    const captchaResponse = grecaptcha.enterprise.getResponse();
+    if (!captchaResponse || captchaResponse.length === 0) {
+        alert("⚠️ Please complete the reCAPTCHA challenge first!");
+        return; // Stop here. Do not send.
+    }
+    // 👆 END SECURITY CHECK 👆
+
     e.preventDefault();
     const btn = document.getElementById("btn-submit-fb");
     const originalText = btn.innerText;
