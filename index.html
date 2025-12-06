@@ -206,7 +206,7 @@
                             <small style="color: var(--success);"><i class="fa-solid fa-shield-halved"></i> Protected by reCAPTCHA Enterprise</small>
                         </p>
 
-                        <form onsubmit="submitFeedback(event)">
+                        <form onsubmit="return false;">
                             <div style="margin-bottom: 15px;">
                                 <label style="display:block; margin-bottom: 5px; font-weight:600; font-size:13px;">Topic</label>
                                 <select id="fb-topic" style="width:100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
@@ -227,7 +227,10 @@
                                 data-action="FEEDBACK">
                             </div>
 
-                            <button type="submit" id="btn-submit-fb" 
+                            <button type="button" id="btn-submit-fb" onclick="submitFeedback(event)"
+                                style="background: var(--fiwa-blue); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">
+                                Submit Feedback
+                            </button>
                                 style="background: var(--fiwa-blue); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">
                                 Submit Feedback
                             </button>
