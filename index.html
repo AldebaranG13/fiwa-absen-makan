@@ -657,9 +657,27 @@
 
         // 4. AUTH FUNCTIONS
         window.loginWithGoogle = () => {
-            signInWithPopup(auth, provider).catch((error) => {
-                document.getElementById("login-error").innerText = error.message;
-            });
+            const btn = document.querySelector(".google-btn");
+    
+            // 1. Disable button to prevent double-clicks
+            btn.disabled = true; 
+            btn.style.opacity = "0.5";
+            btn.innerHTML = "<span>Opening Google...</span>";
+
+            signInWithPopup(auth, provider)
+                .then(() => {
+                    // Login successful! onAuthStateChanged will handle the rest.
+                    console.log("Login Success");
+                })
+                .catch((error) => {
+                    // Login failed or cancelled
+                    document.getElementById("login-error").innerText = error.message;
+            
+                    // 2. Re-enable button so they can try again
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"><span>Sign in with Google</span>';
+                });
         };
 
         window.logout = () => {
