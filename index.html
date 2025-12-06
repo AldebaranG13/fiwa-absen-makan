@@ -223,7 +223,7 @@
                             </div>
 
                             <div class="g-recaptcha" 
-                                data-sitekey="6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW" 
+                                data-sitekey="6LdDACMsAAAAAOhKH4-gNQDk0-WKEE8M1pnIY1nv" 
                                 data-action="FEEDBACK"
                                 style="margin-bottom: 20px;">
                             </div>
@@ -643,10 +643,10 @@
         const app = initializeApp(firebaseConfig);
 
         try {
-            //initializeAppCheck(app, {
-            //    provider: new ReCaptchaV3Provider('6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW'),
-            //    isTokenAutoRefreshEnabled: true
-            //});
+            initializeAppCheck(app, {
+                provider: new ReCaptchaV3Provider('6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW'),
+                isTokenAutoRefreshEnabled: true
+            });
             console.log("🛡️ App Check: Active");
         } catch (e) {
             console.error("⚠️ App Check Error:", e);
@@ -792,7 +792,7 @@
         }
 
         // 7. FEEDBACK LOGIC
-        window.submitFeedback = async (e) => {
+        window.submitFeedback = async (e) => {da
             e.preventDefault();
 
             // Security Check
