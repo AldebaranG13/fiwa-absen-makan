@@ -668,13 +668,13 @@
 
         // 🚀 SPEED BOOST: ENABLE OFFLINE DATA
         // This makes the app load instantly on the second visit!
-        enableIndexedDbPersistence(db).catch((err) => {
+        /*enableIndexedDbPersistence(db).catch((err) => {
             if (err.code == 'failed-precondition') {
                 console.log("Multiple tabs open, persistence disabled.");
             } else if (err.code == 'unimplemented') {
                 console.log("Browser doesn't support persistence.");
             }
-        });
+        });*/
         const provider = new GoogleAuthProvider();
 
         // 4. AUTH FUNCTIONS (INSTANT FEEDBACK EDITION)
