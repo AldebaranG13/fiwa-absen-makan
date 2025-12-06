@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Absen Makan - FIWA</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
     
     <style>
         /* =========================================
@@ -224,7 +224,8 @@
 
                             <div class="g-recaptcha" 
                                 data-sitekey="6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW" 
-                                data-action="FEEDBACK">
+                                data-action="FEEDBACK"
+                                style="margin-bottom: 20px;">
                             </div>
 
                             <button type="button" id="btn-submit-fb" onclick="submitFeedback(event)"
@@ -234,7 +235,6 @@
                         </form>
                     </div>
                 </div>
-                </div> </div> </div> ```
 
             </div>
         </div>
@@ -257,7 +257,7 @@
             measurementId: "G-BY52DPL6QY"
         };
 
-        // 2. USER MAPPING (UPDATED FROM YOUR CSV)
+        // 2. USER MAPPING
         const USER_MAP = {
             "dhabith.naufal@fiwa.sch.id": "2526.07.048",
             "kido.malinka@fiwa.sch.id": "2526.07.074",
@@ -636,187 +636,181 @@
             "muhamad.fahri1@fiwa.sch.id": "2324.10.031",
             "abiyyu.reazana1@fiwa.sch.id": "2324.10.032",
             "musa1@fiwa.sch.id": "2324.10.072"
-};
+        };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+        // 3. INITIALIZE APP & SECURITY
+        const app = initializeApp(firebaseConfig);
 
-// --- NEW SECURITY CODE START ---
-initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider('6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW'),
-    isTokenAutoRefreshEnabled: true
-});
-// --- NEW SECURITY CODE END ---
-
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
-
-// 3. AUTH LOGIC
-window.loginWithGoogle = () => {
-    signInWithPopup(auth, provider).catch((error) => {
-        document.getElementById("login-error").innerText = error.message;
-    });
-};
-
-window.logout = () => {
-    signOut(auth).then(() => location.reload());
-};
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // User Logged In
-        document.getElementById("login-screen").classList.add("hidden");
-        document.getElementById("app-container").classList.remove("hidden");
-        
-        document.getElementById("display-name").innerText = user.displayName;
-        document.getElementById("display-avatar").src = user.photoURL;
-
-        // CHECK MAP
-        const email = user.email.toLowerCase();
-        const studentId = USER_MAP[email];
-
-        if (studentId) {
-            loadActivity(studentId);
-        } else {
-            showErrorInTable(`⚠️ Access Denied. Email <b>${email}</b> is not in the system.`);
-        }
-    } else {
-        document.getElementById("login-screen").classList.remove("hidden");
-        document.getElementById("app-container").classList.add("hidden");
-    }
-});
-
-// 4. LOAD DATA
-async function loadActivity(studentId) {
-    const tableBody = document.getElementById("activity-body");
-    const spinner = document.getElementById("loading-spinner");
-    
-    tableBody.innerHTML = "";
-    spinner.classList.remove("hidden");
-
-    try {
-        // ✅ We put orderBy BACK because you created the Index!
-        const q = query(
-            collection(db, "activity_logs"),
-            where("studentId", "==", studentId),
-            orderBy("uploadedAt", "desc") 
-        );
-
-        const querySnapshot = await getDocs(q);
-        spinner.classList.add("hidden");
-
-        if (querySnapshot.empty) {
-            showErrorInTable("No meal history found.");
-            return;
+        try {
+            initializeAppCheck(app, {
+                provider: new ReCaptchaV3Provider('6LdtwCEsAAAAANEl2kclEFA6YBN9pmoGVoQDZyuW'),
+                isTokenAutoRefreshEnabled: true
+            });
+            console.log("🛡️ App Check: Active");
+        } catch (e) {
+            console.error("⚠️ App Check Error:", e);
         }
 
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const statusClass = data.type === "IN" ? "status-IN" : "status-OUT";
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // 4. AUTH FUNCTIONS
+        window.loginWithGoogle = () => {
+            signInWithPopup(auth, provider).catch((error) => {
+                document.getElementById("login-error").innerText = error.message;
+            });
+        };
+
+        window.logout = () => {
+            signOut(auth).then(() => location.reload());
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById("login-screen").classList.add("hidden");
+                document.getElementById("app-container").classList.remove("hidden");
+                
+                document.getElementById("display-name").innerText = user.displayName;
+                document.getElementById("display-avatar").src = user.photoURL;
+
+                const email = user.email.toLowerCase();
+                const studentId = USER_MAP[email];
+
+                if (studentId) {
+                    loadActivity(studentId);
+                } else {
+                    showErrorInTable(`⚠️ Access Denied. Email <b>${email}</b> is not in the system.`);
+                }
+            } else {
+                document.getElementById("login-screen").classList.remove("hidden");
+                document.getElementById("app-container").classList.add("hidden");
+            }
+        });
+
+        // 5. DATA LOADING
+        async function loadActivity(studentId) {
+            const tableBody = document.getElementById("activity-body");
+            const spinner = document.getElementById("loading-spinner");
             
-            // Simple Date Format
-            let timeDisplay = "-";
-            if(data.uploadedAt && data.uploadedAt.toDate) {
-                timeDisplay = data.uploadedAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } else if (data.uploadedAt) {
-                 timeDisplay = new Date(data.uploadedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            tableBody.innerHTML = "";
+            spinner.classList.remove("hidden");
+
+            try {
+                const q = query(
+                    collection(db, "activity_logs"),
+                    where("studentId", "==", studentId),
+                    orderBy("uploadedAt", "desc")
+                );
+
+                const querySnapshot = await getDocs(q);
+                spinner.classList.add("hidden");
+
+                if (querySnapshot.empty) {
+                    showErrorInTable("No meal history found.");
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const statusClass = data.type === "IN" ? "status-IN" : "status-OUT";
+                    
+                    let timeDisplay = "-";
+                    if(data.uploadedAt && data.uploadedAt.toDate) {
+                        timeDisplay = data.uploadedAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    } else if (data.uploadedAt) {
+                         timeDisplay = new Date(data.uploadedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    }
+
+                    const row = `<tr>
+                            <td style="font-weight:600;">${data.date}</td>
+                            <td>${data.info}</td>
+                            <td><span class="status-badge ${statusClass}">${data.type}</span></td>
+                            <td style="color:#999; font-size:12px;">${timeDisplay}</td>
+                        </tr>`;
+                    tableBody.innerHTML += row;
+                });
+
+            } catch (e) {
+                spinner.classList.add("hidden");
+                console.error(e);
+                showErrorInTable("Error loading data.");
+            }
+        }
+
+        function showErrorInTable(msg) {
+            const tableBody = document.getElementById("activity-body");
+            document.getElementById("loading-spinner").classList.add("hidden");
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 30px; color: #666;">${msg}</td></tr>`;
+        }
+
+        // 6. NAVIGATION
+        window.switchPage = (pageName, element) => {
+            document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+            element.classList.add("active");
+            
+            const titles = { 
+                "activity": "My Activity", 
+                "leaderboard": "Leaderboard", 
+                "feedback": "Feedback" 
+            };
+            document.getElementById("page-title").innerText = titles[pageName];
+
+            document.getElementById("page-activity").classList.add("hidden");
+            document.getElementById("page-leaderboard").classList.add("hidden");
+            document.getElementById("page-feedback").classList.add("hidden");
+            
+            document.getElementById("page-" + pageName).classList.remove("hidden");
+        }
+
+        // 7. FEEDBACK LOGIC
+        window.submitFeedback = async (e) => {
+            e.preventDefault();
+
+            // Security Check
+            try {
+                const captchaResponse = grecaptcha.enterprise.getResponse();
+                if (!captchaResponse || captchaResponse.length === 0) {
+                    alert("⚠️ Please verify you are not a robot first!");
+                    return; 
+                }
+            } catch (err) {
+                alert("⚠️ Captcha error. Refresh the page.");
+                return;
             }
 
-            const row = `
-                <tr>
-                    <td style="font-weight:600;">${data.date}</td>
-                    <td>${data.info}</td>
-                    <td><span class="status-badge ${statusClass}">${data.type}</span></td>
-                    <td style="color:#999; font-size:12px;">${timeDisplay}</td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
+            const btn = document.getElementById("btn-submit-fb");
+            const originalText = btn.innerText;
+            btn.innerText = "Sending...";
+            btn.disabled = true;
 
-    } catch (e) {
-        spinner.classList.add("hidden");
-        console.error(e);
-        showErrorInTable("Error loading data. Check console.");
-    }
-}
+            try {
+                const user = auth.currentUser;
+                if (!user) throw new Error("Please login first.");
 
-function showErrorInTable(msg) {
-    const tableBody = document.getElementById("activity-body");
-    document.getElementById("loading-spinner").classList.add("hidden");
-    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 30px; color: #666;">${msg}</td></tr>`;
-}
+                await addDoc(collection(db, "feedback_messages"), {
+                    uid: user.uid,
+                    name: user.displayName,
+                    email: user.email,
+                    topic: document.getElementById("fb-topic").value,
+                    message: document.getElementById("fb-message").value,
+                    timestamp: new Date()
+                });
 
-// 🔄 UPDATED PAGE SWITCHER
-window.switchPage = (pageName, element) => {
-    document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
-    element.classList.add("active");
-    
-    const titles = { 
-        "activity": "My Activity", 
-        "leaderboard": "Leaderboard",
-        "feedback": "Feedback" 
-    };
-    document.getElementById("page-title").innerText = titles[pageName];
+                alert("✅ Feedback Sent!");
+                document.getElementById("fb-message").value = ""; 
+                grecaptcha.enterprise.reset(); 
+                
+            } catch (error) {
+                alert("❌ Error: " + error.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        };
 
-    // Hide ALL pages first
-    document.getElementById("page-activity").classList.add("hidden");
-    document.getElementById("page-leaderboard").classList.add("hidden");
-    document.getElementById("page-feedback").classList.add("hidden"); // 👈 Added this missing line!
-    
-    // Show the selected one
-    document.getElementById("page-" + pageName).classList.remove("hidden");
-}
-
-// 📨 FEEDBACK LOGIC
-window.submitFeedback = async (e) => {
-    e.preventDefault(); // 👈 MOVED TO TOP (Crucial fix!)
-
-    // 1. Security Check
-    // We try/catch this in case reCAPTCHA didn't load yet
-    try {
-        const captchaResponse = grecaptcha.enterprise.getResponse();
-        if (!captchaResponse || captchaResponse.length === 0) {
-            alert("⚠️ Please verify you are not a robot first!");
-            return; 
-        }
-    } catch (err) {
-        alert("⚠️ Captcha error. Please refresh the page.");
-        return;
-    }
-
-    // 2. UI Setup
-    const btn = document.getElementById("btn-submit-fb");
-    const originalText = btn.innerText;
-    btn.innerText = "Sending...";
-    btn.disabled = true;
-
-    try {
-        const user = auth.currentUser;
-        if (!user) throw new Error("Please login first.");
-
-        // 3. Send to Database
-        await addDoc(collection(db, "feedback_messages"), {
-            uid: user.uid,
-            name: user.displayName,
-            email: user.email,
-            topic: document.getElementById("fb-topic").value,
-            message: document.getElementById("fb-message").value,
-            timestamp: new Date()
-        });
-
-        alert("✅ Feedback Sent! We will check it soon.");
-        document.getElementById("fb-message").value = ""; 
-        grecaptcha.enterprise.reset(); // Reset the box so they can send again if needed
-        
-    } catch (error) {
-        alert("❌ Error: " + error.message);
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
-};
-</script>
+        // 8. FINAL CHECK
+        alert("✅ SYSTEM ONLINE! Try logging in.");
+    </script>
 </body>
 </html>
-alert("✅ SYSTEM ONLINE: JavaScript is working!");
