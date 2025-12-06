@@ -244,7 +244,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // REPLACE your firestore import with this one:
+        import { getFirestore, collection, query, where, getDocs, orderBy, addDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // 1. FIREBASE CONFIG
         const firebaseConfig = {
@@ -653,6 +654,16 @@
 
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // 🚀 SPEED BOOST: ENABLE OFFLINE DATA
+        // This makes the app load instantly on the second visit!
+        enableIndexedDbPersistence(db).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.log("Multiple tabs open, persistence disabled.");
+            } else if (err.code == 'unimplemented') {
+                console.log("Browser doesn't support persistence.");
+            }
+        });
         const provider = new GoogleAuthProvider();
 
         // 4. AUTH FUNCTIONS
