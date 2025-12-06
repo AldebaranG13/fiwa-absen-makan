@@ -666,33 +666,32 @@
         });
         const provider = new GoogleAuthProvider();
 
-        // 4. AUTH FUNCTIONS
+        // 4. AUTH FUNCTIONS (INSTANT FEEDBACK EDITION)
         window.loginWithGoogle = () => {
             const btn = document.querySelector(".google-btn");
-    
-            // 1. Disable button to prevent double-clicks
+            const originalContent = btn.innerHTML;
+        
+            // 1. Instant Visual Feedback ⚡
             btn.disabled = true; 
-            btn.style.opacity = "0.5";
-            btn.innerHTML = "<span>Opening Google...</span>";
+            btn.style.opacity = "0.7";
+            btn.style.cursor = "wait";
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Contacting Google...</span>';
 
             signInWithPopup(auth, provider)
                 .then(() => {
-                    // Login successful! onAuthStateChanged will handle the rest.
-                    console.log("Login Success");
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Success! Loading...</span>';
+                    // onAuthStateChanged will handle the redirect
                 })
                 .catch((error) => {
-                    // Login failed or cancelled
-                    document.getElementById("login-error").innerText = error.message;
-            
-                    // 2. Re-enable button so they can try again
+                    console.error(error);
+                    document.getElementById("login-error").innerText = "Login Cancelled or Failed.";
+                
+                    // Reset Button if failed
                     btn.disabled = false;
                     btn.style.opacity = "1";
-                    btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"><span>Sign in with Google</span>';
+                    btn.style.cursor = "pointer";
+                    btn.innerHTML = originalContent;
                 });
-        };
-
-        window.logout = () => {
-            signOut(auth).then(() => location.reload());
         };
 
         onAuthStateChanged(auth, (user) => {
