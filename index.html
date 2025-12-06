@@ -747,6 +747,7 @@ function showErrorInTable(msg) {
     tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 30px; color: #666;">${msg}</td></tr>`;
 }
 
+// 🔄 UPDATED PAGE SWITCHER
 window.switchPage = (pageName, element) => {
     document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
     element.classList.add("active");
@@ -758,26 +759,35 @@ window.switchPage = (pageName, element) => {
     };
     document.getElementById("page-title").innerText = titles[pageName];
 
+    // Hide ALL pages first
     document.getElementById("page-activity").classList.add("hidden");
     document.getElementById("page-leaderboard").classList.add("hidden");
+    document.getElementById("page-feedback").classList.add("hidden"); // 👈 Added this missing line!
+    
+    // Show the selected one
     document.getElementById("page-" + pageName).classList.remove("hidden");
 }
 
-// --- FEEDBACK LOGIC START ---
+// 📨 FEEDBACK LOGIC
 window.submitFeedback = async (e) => {
+    e.preventDefault(); // 👈 MOVED TO TOP (Crucial fix!)
 
-    // 👇 ADD THIS SECURITY CHECK 👇
-    const captchaResponse = grecaptcha.enterprise.getResponse();
-    if (!captchaResponse || captchaResponse.length === 0) {
-        alert("⚠️ Please complete the reCAPTCHA challenge first!");
-        return; // Stop here. Do not send.
+    // 1. Security Check
+    // We try/catch this in case reCAPTCHA didn't load yet
+    try {
+        const captchaResponse = grecaptcha.enterprise.getResponse();
+        if (!captchaResponse || captchaResponse.length === 0) {
+            alert("⚠️ Please verify you are not a robot first!");
+            return; 
+        }
+    } catch (err) {
+        alert("⚠️ Captcha error. Please refresh the page.");
+        return;
     }
-    // 👆 END SECURITY CHECK 👆
 
-    e.preventDefault();
+    // 2. UI Setup
     const btn = document.getElementById("btn-submit-fb");
     const originalText = btn.innerText;
-    
     btn.innerText = "Sending...";
     btn.disabled = true;
 
@@ -785,7 +795,7 @@ window.submitFeedback = async (e) => {
         const user = auth.currentUser;
         if (!user) throw new Error("Please login first.");
 
-        // This saves to Firestore. App Check protects this automatically!
+        // 3. Send to Database
         await addDoc(collection(db, "feedback_messages"), {
             uid: user.uid,
             name: user.displayName,
@@ -797,6 +807,7 @@ window.submitFeedback = async (e) => {
 
         alert("✅ Feedback Sent! We will check it soon.");
         document.getElementById("fb-message").value = ""; 
+        grecaptcha.enterprise.reset(); // Reset the box so they can send again if needed
         
     } catch (error) {
         alert("❌ Error: " + error.message);
@@ -805,7 +816,6 @@ window.submitFeedback = async (e) => {
         btn.disabled = false;
     }
 };
-// --- FEEDBACK LOGIC END ---
 </script>
 </body>
 </html>
