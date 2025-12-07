@@ -258,40 +258,6 @@
             enableIndexedDbPersistence
         } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-        // --- 🚨 EMERGENCY IN-PAGE CONSOLE 🚨 ---
-        (function() {
-            // create the console box
-            const consoleBox = document.createElement('div');
-            consoleBox.style.cssText = "position:fixed; bottom:0; left:0; width:100%; height:150px; background:rgba(0,0,0,0.8); color:#0f0; font-family:monospace; font-size:12px; overflow-y:scroll; z-index:9999; padding:10px; border-top: 2px solid #0f0;";
-            document.body.appendChild(consoleBox);
-
-            function printToScreen(type, args) {
-                const msg = document.createElement('div');
-                msg.style.color = type === 'error' ? '#ff5555' : '#0f0';
-                msg.style.borderBottom = '1px solid #333';
-                msg.innerText = `[${type.toUpperCase()}] ` + Array.from(args).map(a => 
-                    typeof a === 'object' ? JSON.stringify(a) : String(a)
-                ).join(' ');
-                consoleBox.prepend(msg);
-            }
-
-            const originalLog = console.log;
-            const originalError = console.error;
-
-            console.log = function(...args) {
-                originalLog.apply(console, args);
-                printToScreen('log', args);
-            };
-
-            console.error = function(...args) {
-                originalError.apply(console, args);
-                printToScreen('error', args);
-            };
-
-            console.log("✅ In-Page Console Active. Waiting for errors...");
-        })();
-        // --- 🚨 END OF FAKE CONSOLE 🚨 ---
-
         // 1. FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCVra7GlNTfPX7dk5MjewBnHpB9pDSH9e0",
@@ -303,7 +269,7 @@
             measurementId: "G-BY52DPL6QY"
         };
 
-        // 3. INITIALIZE APP & SECURITY
+        // 2. INITIALIZE APP & SECURITY
         const app = initializeApp(firebaseConfig);
 
         /*try {
@@ -320,7 +286,7 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // 4. AUTH FUNCTIONS
+        // 3. AUTH FUNCTIONS
         window.loginWithGoogle = async () => {
             const btn = document.querySelector(".google-btn");
             const originalContent = btn.innerHTML;
@@ -344,11 +310,9 @@
                 });
         };
 
-        // 5. AUTH STATE LISTENER (THE BRAIN 🧠)
+        // 4. AUTH STATE LISTENER (THE BRAIN 🧠)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                alert("📍 Step 1: Google Login Success! User: " + user.email);
-
                 document.getElementById("login-screen").classList.add("hidden");
                 document.getElementById("app-container").classList.remove("hidden");
                 
@@ -363,13 +327,9 @@
                     where("email", "==", user.email)
                 );
 
-                alert("📍 Step 2: Asking Database for ID...");
-
                 try {
                     // 2. ask the question
                     const snapshot = await getDocs(studentQuery);
-
-                    alert("📍 Step 3: Database Responded!");
 
                     // 3. check answer
                     if (snapshot.empty) {
@@ -382,8 +342,6 @@
                     const studentData = snapshot.docs[0].data();
                     const studentId = studentData.studentId;
 
-                    alert("📍 Step 4: Found Student ID: " + studentId);
-
                     if (studentId) {
                         loadActivity(studentId);
                     } else {
@@ -391,8 +349,8 @@
                     }
 
                 } catch (error) {
-                    alert("❌ CRASH: " + error.message);
                     console.error(error);
+                    alert("❌ System Error: " + error.message);
                 }
 
             } else {
@@ -401,7 +359,7 @@
             }
         });
 
-        // 6. DATA LOADING
+        // 5. DATA LOADING
         async function loadActivity(studentId) {
             const tableBody = document.getElementById("activity-body");
             const spinner = document.getElementById("loading-spinner");
@@ -458,7 +416,7 @@
             tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 30px; color: #666;">${msg}</td></tr>`;
         }
 
-        // 7. NAVIGATION
+        // 6. NAVIGATION
         window.switchPage = (pageName, element) => {
             document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
             element.classList.add("active");
@@ -477,7 +435,7 @@
             document.getElementById("page-" + pageName).classList.remove("hidden");
         }
 
-        // 8. FEEDBACK LOGIC
+        // 7. FEEDBACK LOGIC
         window.submitFeedback = async (e) => {
             e.preventDefault();
 
@@ -523,9 +481,6 @@
         };
 
         window.logout = () => signOut(auth);
-
-        // 9. FINAL CHECK
-        alert("✅ SYSTEM ONLINE! Try logging in.");
     </script>
 </body>
 </html>
