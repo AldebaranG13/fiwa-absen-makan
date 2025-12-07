@@ -244,7 +244,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        // REPLACE your firestore import with this one:
+        
         import { 
             getFirestore, 
             collection, 
@@ -254,8 +254,8 @@
             orderBy, 
             limit, 
             onSnapshot,
-            getDocs,                    // <--- you were missing this!
-            enableIndexedDbPersistence  // <--- and this!
+            getDocs,
+            enableIndexedDbPersistence
         } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // --- 🚨 EMERGENCY IN-PAGE CONSOLE 🚨 ---
@@ -265,19 +265,16 @@
             consoleBox.style.cssText = "position:fixed; bottom:0; left:0; width:100%; height:150px; background:rgba(0,0,0,0.8); color:#0f0; font-family:monospace; font-size:12px; overflow-y:scroll; z-index:9999; padding:10px; border-top: 2px solid #0f0;";
             document.body.appendChild(consoleBox);
 
-            // function to print to our box
             function printToScreen(type, args) {
                 const msg = document.createElement('div');
                 msg.style.color = type === 'error' ? '#ff5555' : '#0f0';
                 msg.style.borderBottom = '1px solid #333';
-                // join all arguments into a string
                 msg.innerText = `[${type.toUpperCase()}] ` + Array.from(args).map(a => 
                     typeof a === 'object' ? JSON.stringify(a) : String(a)
                 ).join(' ');
-                consoleBox.prepend(msg); // put newest at top
+                consoleBox.prepend(msg);
             }
 
-            // hijack the real console
             const originalLog = console.log;
             const originalError = console.error;
 
@@ -306,13 +303,10 @@
             measurementId: "G-BY52DPL6QY"
         };
 
-        // 2. USER MAPPING
-        //(user map deleted for fast boi)
-
         // 3. INITIALIZE APP & SECURITY
         const app = initializeApp(firebaseConfig);
 
-        try {
+        /*try {
             initializeAppCheck(app, {
                 provider: new ReCaptchaV3Provider('6LdkMiMsAAAAAI3eTNOHrFceb2k7ojdiG1KIXmOx'),
                 isTokenAutoRefreshEnabled: true
@@ -320,28 +314,17 @@
             console.log("🛡️ App Check: Active");
         } catch (e) {
             console.error("⚠️ App Check Error:", e);
-        }
+        }*/
 
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        // 🚀 SPEED BOOST: ENABLE OFFLINE DATA
-        // This makes the app load instantly on the second visit!
-        /*enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.log("Multiple tabs open, persistence disabled.");
-            } else if (err.code == 'unimplemented') {
-                console.log("Browser doesn't support persistence.");
-            }
-        });*/
         const provider = new GoogleAuthProvider();
 
-        // 4. AUTH FUNCTIONS (INSTANT FEEDBACK EDITION)
+        // 4. AUTH FUNCTIONS
         window.loginWithGoogle = async () => {
             const btn = document.querySelector(".google-btn");
             const originalContent = btn.innerHTML;
         
-            // 1. Instant Visual Feedback ⚡
             btn.disabled = true; 
             btn.style.opacity = "0.7";
             btn.style.cursor = "wait";
@@ -350,13 +333,10 @@
             signInWithPopup(auth, provider)
                 .then(() => {
                     btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Success! Loading...</span>';
-                    // onAuthStateChanged will handle the redirect
                 })
                 .catch((error) => {
                     console.error(error);
                     document.getElementById("login-error").innerText = "Login Cancelled or Failed.";
-                
-                    // Reset Button if failed
                     btn.disabled = false;
                     btn.style.opacity = "1";
                     btn.style.cursor = "pointer";
@@ -364,8 +344,11 @@
                 });
         };
 
+        // 5. AUTH STATE LISTENER (THE BRAIN 🧠)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                alert("📍 Step 1: Google Login Success! User: " + user.email);
+
                 document.getElementById("login-screen").classList.add("hidden");
                 document.getElementById("app-container").classList.remove("hidden");
                 
@@ -373,38 +356,52 @@
                 document.getElementById("display-avatar").src = user.photoURL;
 
                 const email = user.email.toLowerCase();
-                //1. build the question
+
+                // 1. build the question
                 const studentQuery = query(
                     collection(db, "students"),
                     where("email", "==", user.email)
                 );
-                
-                //2. ask the question
-                const snapshot = await getDocs(studentQuery);
 
-                //3. check answer
-                if (snapshot.empty) {
-                    alert("User Not Recognized, Please Contact aldebaran.gibran@fiwa.sch.id For Help.")
-                    return;
+                alert("📍 Step 2: Asking Database for ID...");
+
+                try {
+                    // 2. ask the question
+                    const snapshot = await getDocs(studentQuery);
+
+                    alert("📍 Step 3: Database Responded!");
+
+                    // 3. check answer
+                    if (snapshot.empty) {
+                        alert("⚠️ User Not Recognized! Email not found in 'students' collection.");
+                        await signOut(auth); // Kick them out
+                        return;
+                    }
+
+                    // 4. grab the data
+                    const studentData = snapshot.docs[0].data();
+                    const studentId = studentData.studentId;
+
+                    alert("📍 Step 4: Found Student ID: " + studentId);
+
+                    if (studentId) {
+                        loadActivity(studentId);
+                    } else {
+                        showErrorInTable(`⚠️ Access Denied. Email <b>${email}</b> is not in the system.`);
+                    }
+
+                } catch (error) {
+                    alert("❌ CRASH: " + error.message);
+                    console.error(error);
                 }
 
-                //4. grab the data
-                //(since email is unique, take only the first result)
-                const studentData = snapshot.docs[0].data()
-                const studentId = studentData.studentId
-
-                if (studentId) {
-                    loadActivity(studentId);
-                } else {
-                    showErrorInTable(`⚠️ Access Denied. Email <b>${email}</b> is not in the system.`);
-                }
             } else {
                 document.getElementById("login-screen").classList.remove("hidden");
                 document.getElementById("app-container").classList.add("hidden");
             }
         });
 
-        // 5. DATA LOADING
+        // 6. DATA LOADING
         async function loadActivity(studentId) {
             const tableBody = document.getElementById("activity-body");
             const spinner = document.getElementById("loading-spinner");
@@ -417,7 +414,7 @@
                     collection(db, "activity_logs"),
                     where("studentId", "==", studentId),
                     orderBy("uploadedAt", "desc"),
-                    limit(20) // <--- add this!
+                    limit(20)
                 );
 
                 const querySnapshot = await getDocs(q);
@@ -461,7 +458,7 @@
             tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 30px; color: #666;">${msg}</td></tr>`;
         }
 
-        // 6. NAVIGATION
+        // 7. NAVIGATION
         window.switchPage = (pageName, element) => {
             document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
             element.classList.add("active");
@@ -480,11 +477,10 @@
             document.getElementById("page-" + pageName).classList.remove("hidden");
         }
 
-        // 7. FEEDBACK LOGIC
+        // 8. FEEDBACK LOGIC
         window.submitFeedback = async (e) => {
             e.preventDefault();
 
-            // Security Check
             try {
                 const captchaResponse = grecaptcha.enterprise.getResponse();
                 if (!captchaResponse || captchaResponse.length === 0) {
@@ -527,9 +523,8 @@
         };
 
         window.logout = () => signOut(auth);
-        
 
-        // 8. FINAL CHECK
+        // 9. FINAL CHECK
         alert("✅ SYSTEM ONLINE! Try logging in.");
     </script>
 </body>
