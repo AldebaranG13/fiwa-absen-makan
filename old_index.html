@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absen Makan - FIWA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
+    
+    <style>
+        /* =========================================
+           🎨 FIWA COLOR PALETTE
+           ========================================= */
+        :root {
+            --bg-body: #F5FBFE;
+            --fiwa-blue: #044E85;
+            --fiwa-mid: #1576BB;
+            --fiwa-gold: #F3B719;
+            --white: #FFFFFF;
+            --text-dark: #333333;
+            --text-grey: #666666;
+            --danger: #dc3545;
+            --success: #28a745;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-body);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            color: var(--text-dark);
+        }
+
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- LOGIN PAGE --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--fiwa-blue) 0%, var(--fiwa-mid) 100%);
+            display: flex; justify-content: center; align-items: center; z-index: 1000;
+        }
+
+        .login-card {
+            background: var(--white); padding: 50px 40px; border-radius: 15px;
+            width: 100%; max-width: 420px; text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); border-top: 6px solid var(--fiwa-gold);
+        }
+        .login-logo img { height: 80px; margin-bottom: 20px; }
+        .login-title { color: var(--fiwa-blue); font-size: 26px; font-weight: 700; margin-bottom: 5px; }
+        .login-subtitle { color: var(--text-grey); font-size: 14px; margin-bottom: 30px; }
+
+        .google-btn {
+            width: 100%; padding: 14px; border: 1px solid #ddd; background: #fff;
+            border-radius: 8px; font-size: 16px; font-weight: 600; color: #555;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            transition: 0.2s;
+        }
+        .google-btn:hover { background-color: #f8f9fa; border-color: #ccc; }
+
+        /* --- DASHBOARD --- */
+        #app-container { width: 100%; height: 100%; display: flex; }
+
+        .sidebar {
+            width: 260px; background-color: var(--white); display: flex; flex-direction: column;
+            border-right: 1px solid #eee; flex-shrink: 0;
+        }
+        .brand {
+            height: 80px; display: flex; align-items: center; padding: 0 25px; gap: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .brand img { height: 40px; }
+        .brand-text { font-size: 18px; font-weight: 700; color: var(--fiwa-blue); }
+
+        .nav-menu { padding: 25px 15px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 12px 20px;
+            color: var(--text-grey); text-decoration: none; border-radius: 8px;
+            font-weight: 500; transition: 0.2s; cursor: pointer;
+        }
+        .nav-item:hover { background-color: var(--bg-body); color: var(--fiwa-blue); }
+        .nav-item.active { background-color: var(--fiwa-blue); color: var(--white); box-shadow: 0 4px 10px rgba(4, 78, 133, 0.25); }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-body); }
+
+        .topbar {
+            height: 70px; background: var(--white); display: flex; justify-content: space-between;
+            align-items: center; padding: 0 30px; border-bottom: 1px solid #eee;
+        }
+        .page-title { font-size: 20px; font-weight: 600; color: var(--fiwa-blue); }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .user-name { display: block; font-weight: 700; color: var(--fiwa-blue); font-size: 15px; }
+        .user-role { display: block; font-size: 12px; color: var(--text-grey); }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--fiwa-gold); }
+
+        .content-scroll { padding: 30px; overflow-y: auto; height: 100%; }
+
+        /* TABLES */
+        .card { background: var(--white); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; text-align: left; padding: 15px 20px; color: var(--text-grey); font-size: 13px; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 15px 20px; border-bottom: 1px solid #f0f0f0; color: var(--text-dark); font-size: 14px; }
+        
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .status-IN { background: #e6f4ea; color: #1e7e34; }
+        .status-OUT { background: #fbe9eb; color: #dc3545; }
+
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--fiwa-gold); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-card fade-in">
+            <div class="login-logo">
+                <img src="fiwa_logo.png" alt="FIWA" onerror="this.style.display='none';">
+            </div>
+            <h1 class="login-title">Absen Makan</h1>
+            <p class="login-subtitle">Fitrah Islamic World Academy</p>
+            
+            <button class="google-btn" onclick="loginWithGoogle()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+                <span>Sign in with Google</span>
+            </button>
+            <p id="login-error" style="color: red; margin-top: 15px; font-size: 13px;"></p>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="fiwa_logo.png" alt="Logo" onerror="this.style.display='none';">
+                <span class="brand-text">Absen Makan</span>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" onclick="switchPage('activity', this)">
+                    <i class="fa-solid fa-clock-rotate-left" style="width: 20px;"></i> My Activity
+                </div>
+                <div class="nav-item" onclick="switchPage('leaderboard', this)">
+                    <i class="fa-solid fa-trophy" style="width: 20px;"></i> Leaderboard
+                </div>
+                <div class="nav-item" onclick="switchPage('feedback', this)">
+                    <i class="fa-solid fa-comment-dots" style="width: 20px;"></i> Feedback
+                </div>
+                <div style="flex: 1;"></div>
+                <div class="nav-item" onclick="logout()" style="color: var(--danger);">
+                    <i class="fa-solid fa-arrow-right-from-bracket" style="width: 20px;"></i> Logout
+                </div>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header class="topbar">
+                <h2 class="page-title" id="page-title">My Activity</h2>
+                <div class="user-info">
+                    <div class="user-text">
+                        <span class="user-name" id="display-name">Loading...</span>
+                        <span class="user-role">Student</span>
+                    </div>
+                    <img id="display-avatar" class="user-avatar" src="" alt="Profile">
+                </div>
+            </header>
+
+            <div class="content-scroll">
+                
+                <div id="page-activity" class="fade-in">
+                    <div class="card">
+                        <table id="activity-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Meal Info</th>
+                                    <th>Status</th>
+                                    <th>Logged At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activity-body"></tbody>
+                        </table>
+                        <div id="loading-spinner" class="loader hidden"></div>
+                    </div>
+                </div>
+
+                <div id="page-leaderboard" class="hidden fade-in">
+                    <div class="card" style="padding: 50px; text-align: center;">
+                        <i class="fa-solid fa-trophy" style="font-size: 60px; color: var(--fiwa-gold); margin-bottom: 20px;"></i>
+                        <h3>Leaderboard Algorithm</h3>
+                        <p style="color: #666; max-width: 400px; margin: 0 auto; margin-bottom: 20px;">
+                            We are currently processing data for Grade 7 Ikhwan. 
+                            The ranking system will calculate the fastest average eating times.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="page-feedback" class="hidden fade-in">
+                    <div class="card" style="padding: 30px; max-width: 600px; margin: 0 auto;">
+                        <h3 style="color: var(--fiwa-blue); margin-bottom: 20px;">
+                            <i class="fa-solid fa-comment-dots"></i> Student Feedback
+                        </h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                            Found a bug? Have an idea? Send it here. <br>
+                            <small style="color: var(--success);"><i class="fa-solid fa-shield-halved"></i> Protected by reCAPTCHA Enterprise</small>
+                        </p>
+
+                        <form onsubmit="return false;">
+                            <div style="margin-bottom: 15px;">
+                                <label style="display:block; margin-bottom: 5px; font-weight:600; font-size:13px;">Topic</label>
+                                <select id="fb-topic" style="width:100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                                    <option value="Bug Report">🐛 Bug Report</option>
+                                    <option value="Feature Request">💡 Feature Request</option>
+                                    <option value="Question">❓ General Question</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <label style="display:block; margin-bottom: 5px; font-weight:600; font-size:13px;">Message</label>
+                                <textarea id="fb-message" rows="5" required placeholder="Describe your issue..." 
+                                    style="width:100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: sans-serif;"></textarea>
+                            </div>
+
+                            <div class="g-recaptcha" 
+                                data-sitekey="6LdDACMsAAAAAOhKH4-gNQDk0-WKEE8M1pnIY1nv" 
+                                data-action="FEEDBACK"
+                                style="margin-bottom: 20px;">
+                            </div>
+
+                            <button type="button" id="btn-submit-fb" onclick="submitFeedback(event)"
+                                style="background: var(--fiwa-blue); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">
+                                Submit Feedback
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            query, 
+            where, 
+            orderBy, 
+            limit, 
+            onSnapshot,
+            getDocs,
+            enableIndexedDbPersistence
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        // 1. FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVra7GlNTfPX7dk5MjewBnHpB9pDSH9e0",
+            authDomain: "fiwa-absen-makan.firebaseapp.com",
+            projectId: "fiwa-absen-makan",
+            storageBucket: "fiwa-absen-makan.firebasestorage.app",
+            messagingSenderId: "372035514688",
+            appId: "1:372035514688:web:d7a66d8f3150d3edb90aa5",
+            measurementId: "G-BY52DPL6QY"
+        };
+
+        // 2. INITIALIZE APP & SECURITY
+        const app = initializeApp(firebaseConfig);
+
+        /*try {
+            initializeAppCheck(app, {
+                provider: new ReCaptchaV3Provider('6LdkMiMsAAAAAI3eTNOHrFceb2k7ojdiG1KIXmOx'),
+                isTokenAutoRefreshEnabled: true
+            });
+            console.log("🛡️ App Check: Active");
+        } catch (e) {
+            console.error("⚠️ App Check Error:", e);
+        }*/
+
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // 3. AUTH FUNCTIONS
+        window.loginWithGoogle = async () => {
+            const btn = document.querySelector(".google-btn");
+            const originalContent = btn.innerHTML;
+        
+            btn.disabled = true; 
+            btn.style.opacity = "0.7";
+            btn.style.cursor = "wait";
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Contacting Google...</span>';
+
+            signInWithPopup(auth, provider)
+                .then(() => {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Success! Loading...</span>';
+                })
+                .catch((error) => {
+                    console.error(error);
+                    document.getElementById("login-error").innerText = "Login Cancelled or Failed.";
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.style.cursor = "pointer";
+                    btn.innerHTML = originalContent;
+                });
+        };
+
+        // 4. AUTH STATE LISTENER (THE BRAIN 🧠)
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById("login-screen").classList.add("hidden");
+                document.getElementById("app-container").classList.remove("hidden");
+                
+                document.getElementById("display-name").innerText = user.displayName;
+                document.getElementById("display-avatar").src = user.photoURL;
+
+                const email = user.email.toLowerCase();
+
+                // 1. build the question
+                const studentQuery = query(
+                    collection(db, "students"),
+                    where("email", "==", user.email)
+                );
+
+                try {
+                    // 2. ask the question
+                    const snapshot = await getDocs(studentQuery);
+
+                    // 3. check answer
+                    if (snapshot.empty) {
+                        alert("⚠️ User Not Recognized! Email not found in 'students' collection.");
+                        await signOut(auth); // Kick them out
+                        return;
+                    }
+
+                    // 4. grab the data
+                    const studentData = snapshot.docs[0].data();
+                    const studentId = studentData.studentId;
+
+                    if (studentId) {
+                        loadActivity(studentId);
+                    } else {
+                        showErrorInTable(`⚠️ Access Denied. Email <b>${email}</b> is not in the system.`);
+                    }
+
+                } catch (error) {
+                    console.error(error);
+                    alert("❌ System Error: " + error.message);
+                }
+
+            } else {
+                document.getElementById("login-screen").classList.remove("hidden");
+                document.getElementById("app-container").classList.add("hidden");
+            }
+        });
+
+        // 5. DATA LOADING
+        async function loadActivity(studentId) {
+            const tableBody = document.getElementById("activity-body");
+            const spinner = document.getElementById("loading-spinner");
+            
+            tableBody.innerHTML = "";
+            spinner.classList.remove("hidden");
+
+            try {
+                const q = query(
+                    collection(db, "activity_logs"),
+                    where("studentId", "==", studentId),
+                    orderBy("uploadedAt", "desc"),
+                    limit(20)
+                );
+
+                const querySnapshot = await getDocs(q);
+                spinner.classList.add("hidden");
+
+                if (querySnapshot.empty) {
+                    showErrorInTable("No meal history found.");
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const statusClass = data.type === "IN" ? "status-IN" : "status-OUT";
+                    
+                    let timeDisplay = "-";
+                    if(data.uploadedAt && data.uploadedAt.toDate) {
+                        timeDisplay = data.uploadedAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    } else if (data.uploadedAt) {
+                         timeDisplay = new Date(data.uploadedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    }
+
+                    const row = `<tr>
+                            <td style="font-weight:600;">${data.date}</td>
+                            <td>${data.info}</td>
+                            <td><span class="status-badge ${statusClass}">${data.type}</span></td>
+                            <td style="color:#999; font-size:12px;">${timeDisplay}</td>
+                        </tr>`;
+                    tableBody.innerHTML += row;
+                });
+
+            } catch (e) {
+                spinner.classList.add("hidden");
+                console.error(e);
+                showErrorInTable("Error loading data.");
+            }
+        }
+
+        function showErrorInTable(msg) {
+            const tableBody = document.getElementById("activity-body");
+            document.getElementById("loading-spinner").classList.add("hidden");
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 30px; color: #666;">${msg}</td></tr>`;
+        }
+
+        // 6. NAVIGATION
+        window.switchPage = (pageName, element) => {
+            document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+            element.classList.add("active");
+            
+            const titles = { 
+                "activity": "My Activity", 
+                "leaderboard": "Leaderboard", 
+                "feedback": "Feedback" 
+            };
+            document.getElementById("page-title").innerText = titles[pageName];
+
+            document.getElementById("page-activity").classList.add("hidden");
+            document.getElementById("page-leaderboard").classList.add("hidden");
+            document.getElementById("page-feedback").classList.add("hidden");
+            
+            document.getElementById("page-" + pageName).classList.remove("hidden");
+        }
+
+        // 7. FEEDBACK LOGIC
+        window.submitFeedback = async (e) => {
+            e.preventDefault();
+
+            try {
+                const captchaResponse = grecaptcha.enterprise.getResponse();
+                if (!captchaResponse || captchaResponse.length === 0) {
+                    alert("⚠️ Please verify you are not a robot first!");
+                    return; 
+                }
+            } catch (err) {
+                alert("⚠️ Captcha error. Refresh the page.");
+                return;
+            }
+
+            const btn = document.getElementById("btn-submit-fb");
+            const originalText = btn.innerText;
+            btn.innerText = "Sending...";
+            btn.disabled = true;
+
+            try {
+                const user = auth.currentUser;
+                if (!user) throw new Error("Please login first.");
+
+                await addDoc(collection(db, "feedback_messages"), {
+                    uid: user.uid,
+                    name: user.displayName,
+                    email: user.email,
+                    topic: document.getElementById("fb-topic").value,
+                    message: document.getElementById("fb-message").value,
+                    timestamp: new Date()
+                });
+
+                alert("✅ Feedback Sent!");
+                document.getElementById("fb-message").value = ""; 
+                grecaptcha.enterprise.reset(); 
+                
+            } catch (error) {
+                alert("❌ Error: " + error.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        window.logout = () => signOut(auth);
+    </script>
+</body>
+</html>
