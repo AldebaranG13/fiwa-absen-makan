@@ -2,23 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Migration Tool 🚛</title>
+    <title>Migration Tool (Console Unlocked) 🚛</title>
     <style>
-        body { font-family: monospace; background: #222; color: #0f0; padding: 20px; }
-        #status { white-space: pre-wrap; margin-top: 20px; }
-        button { padding: 10px 20px; font-size: 20px; cursor: pointer; background: #0f0; border: none; font-weight: bold; }
+        body { font-family: 'Courier New', monospace; background: #222; color: #0f0; padding: 20px; padding-bottom: 200px; }
+        h1 { border-bottom: 2px solid #0f0; padding-bottom: 10px; }
+        button { padding: 15px 30px; font-size: 20px; cursor: pointer; background: #0f0; color: #000; border: none; font-weight: bold; border-radius: 5px; margin: 20px 0; }
+        button:hover { background: #fff; }
+        #status { white-space: pre-wrap; line-height: 1.5; }
     </style>
 </head>
 <body>
 
     <h1>🚀 Data Migration Tool</h1>
-    <p>Open Console (F12) to see details.</p>
+    <p>Console is blocked? No problem. We built our own.</p>
+    
     <button onclick="startUpload()">START UPLOAD</button>
-    <div id="status">Waiting to start...</div>
+    
+    <div id="status">Waiting for launch...</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        // --- 🚨 IN-PAGE CONSOLE (JAILBREAK) 🚨 ---
+        (function() {
+            const consoleBox = document.createElement('div');
+            consoleBox.style.cssText = "position:fixed; bottom:0; left:0; width:100%; height:200px; background:rgba(0,0,0,0.9); color:#0f0; font-family:monospace; font-size:12px; overflow-y:scroll; z-index:9999; padding:10px; border-top: 2px solid #0f0;";
+            document.body.appendChild(consoleBox);
+
+            function printToScreen(type, args) {
+                const msg = document.createElement('div');
+                msg.style.color = type === 'error' ? '#ff5555' : '#0f0';
+                msg.style.borderBottom = '1px solid #333';
+                msg.innerText = `[${type.toUpperCase()}] ` + Array.from(args).map(a => 
+                    typeof a === 'object' ? JSON.stringify(a) : String(a)
+                ).join(' ');
+                consoleBox.prepend(msg);
+            }
+
+            const originalLog = console.log;
+            const originalError = console.error;
+
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                printToScreen('log', args);
+            };
+
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                printToScreen('error', args);
+            };
+            
+            console.log("✅ Custom Console Online. Ready to upload.");
+        })();
+        // --- 🚨 END CONSOLE 🚨 ---
 
         const firebaseConfig = {
             apiKey: "AIzaSyCVra7GlNTfPX7dk5MjewBnHpB9pDSH9e0",
@@ -418,42 +455,46 @@
         // ==========================================
 
         window.startUpload = async () => {
-            const status = document.getElementById("status");
+            console.log("🚀 Starting migration...");
             const entries = Object.entries(USER_MAP);
-            status.innerText = `Found ${entries.length} students to upload...\n`;
+            
+            if (entries.length === 0) {
+                console.error("USER_MAP is empty! Did you paste the data?");
+                alert("USER_MAP is empty!");
+                return;
+            }
 
+            console.log(`Found ${entries.length} students.`);
             let count = 0;
             
             for (const [email, studentId] of entries) {
                 try {
-                    // Optional: Check if already exists to avoid duplicates
-                    // (Slows it down a bit, but safer)
+                    // Check for duplicates
                     const q = query(collection(db, "students"), where("email", "==", email));
                     const check = await getDocs(q);
 
                     if (!check.empty) {
-                        status.innerText += `⚠️ Skipped (Already Exists): ${email}\n`;
+                        console.log(`⚠️ Skipped (Exists): ${email}`);
                         continue;
                     }
 
-                    // Upload!
+                    // Upload
                     await addDoc(collection(db, "students"), {
-                        email: email.toLowerCase(), // Force lowercase to avoid login issues
+                        email: email.toLowerCase(),
                         studentId: studentId,
                         uploadedAt: new Date()
                     });
 
                     count++;
-                    status.innerText += `✅ Uploaded: ${email} -> ${studentId}\n`;
+                    console.log(`✅ Uploaded: ${email} -> ${studentId}`);
                     
                 } catch (err) {
-                    console.error(err);
-                    status.innerText += `❌ ERROR on ${email}: ${err.message}\n`;
+                    console.error(`❌ FAILED ${email}:`, err.message);
                 }
             }
 
-            status.innerText += `\n✨ DONE! Uploaded ${count} new students.`;
-            alert("Migration Complete! You can delete this file now.");
+            console.log(`✨ JOB DONE! Uploaded ${count} new students.`);
+            alert("Migration Complete!");
         };
     </script>
 </body>
