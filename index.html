@@ -286,7 +286,7 @@
                 printToScreen('log', args);
             };
 
-            onsole.error = function(...args) {
+            console.error = function(...args) {
                 originalError.apply(console, args);
                 printToScreen('error', args);
             };
