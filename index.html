@@ -258,6 +258,43 @@
             enableIndexedDbPersistence  // <--- and this!
         } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
+        // --- 🚨 EMERGENCY IN-PAGE CONSOLE 🚨 ---
+        (function() {
+            // create the console box
+            const consoleBox = document.createElement('div');
+            consoleBox.style.cssText = "position:fixed; bottom:0; left:0; width:100%; height:150px; background:rgba(0,0,0,0.8); color:#0f0; font-family:monospace; font-size:12px; overflow-y:scroll; z-index:9999; padding:10px; border-top: 2px solid #0f0;";
+            document.body.appendChild(consoleBox);
+
+            // function to print to our box
+            function printToScreen(type, args) {
+                const msg = document.createElement('div');
+                msg.style.color = type === 'error' ? '#ff5555' : '#0f0';
+                msg.style.borderBottom = '1px solid #333';
+                // join all arguments into a string
+                msg.innerText = `[${type.toUpperCase()}] ` + Array.from(args).map(a => 
+                    typeof a === 'object' ? JSON.stringify(a) : String(a)
+                ).join(' ');
+                consoleBox.prepend(msg); // put newest at top
+            }
+
+            // hijack the real console
+            const originalLog = console.log;
+            const originalError = console.error;
+
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                printToScreen('log', args);
+            };
+
+            onsole.error = function(...args) {
+                originalError.apply(console, args);
+                printToScreen('error', args);
+            };
+
+            console.log("✅ In-Page Console Active. Waiting for errors...");
+        })();
+        // --- 🚨 END OF FAKE CONSOLE 🚨 ---
+
         // 1. FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCVra7GlNTfPX7dk5MjewBnHpB9pDSH9e0",
